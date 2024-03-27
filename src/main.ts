@@ -5,12 +5,19 @@ el.innerHTML = `
  `;
 appContainer?.appendChild(el);
 
-// Define the character's starting position and size
 interface Character {
   x: number;
   y: number;
   size: number;
-  direction: string;
+  direction: Direction;
+}
+
+enum Direction {
+  Up = "up",
+  Down = "down",
+  Left = "left",
+  Right = "right",
+  None = "none",
 }
 
 class Game {
@@ -49,7 +56,7 @@ class Game {
       x: this.startingPossition.x,
       y: this.startingPossition.y,
       size: 50,
-      direction: "right",
+      direction: Direction.None,
     };
 
     this.characterImage = new Image();
@@ -72,25 +79,33 @@ class Game {
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    // Update character direction based on arrow key input without moving here
     switch (event.key) {
       case "ArrowUp":
-        this.character.direction = "up";
+      case "W":
+      case "w":
+        this.character.direction = Direction.Up;
         break;
       case "ArrowDown":
-        this.character.direction = "down";
+      case "S":
+      case "s":
+        this.character.direction = Direction.Down;
         break;
       case "ArrowLeft":
-        this.character.direction = "left";
+      case "A":
+      case "a":
+        this.character.direction = Direction.Left;
         break;
       case "ArrowRight":
-        this.character.direction = "right";
+      case "D":
+      case "d":
+        this.character.direction = Direction.Right;
         break;
     }
   }
-
   private moveCharacter(): void {
-    // Update character position based on the current direction
+    if (this.character.direction === Direction.None) {
+      return;
+    }
     switch (this.character.direction) {
       case "up":
         this.character.y -= this.speed;
