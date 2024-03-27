@@ -32,6 +32,15 @@ class Game {
     x: 300,
     y: 200,
   };
+  private movementInterval: number | null = null;
+
+  private initialObstacles = [
+    { x: 100, y: 150, size: 50, speed: 1, direction: "horizontal" },
+    { x: 200, y: 300, size: 45, speed: 1, direction: "vertical" },
+    { x: 550, y: 450, size: 60, speed: 1, direction: "horizontal" },
+    { x: 300, y: 500, size: 40, speed: 1, direction: "vertical" },
+    { x: 750, y: 100, size: 40, speed: 1, direction: "horizontal" },
+  ];
 
   constructor(canvasId: string) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
@@ -51,16 +60,11 @@ class Game {
     this.obstacleImage.onload = () => this.draw();
     this.obstacleImage.src = "../assets/star.svg";
 
-    this.obstacles = [
-      { x: 100, y: 150, size: 50, speed: 1, direction: "horizontal" },
-      { x: 200, y: 300, size: 45, speed: 1, direction: "vertical" },
-      { x: 550, y: 450, size: 60, speed: 1, direction: "horizontal" },
-      { x: 300, y: 500, size: 40, speed: 1, direction: "vertical" },
-      { x: 750, y: 100, size: 40, speed: 1, direction: "horizontal" },
-    ];
+    this.obstacles = this.initialObstacles.map((obstacle) => ({ ...obstacle }));
 
     this.attachEventListeners();
     this.draw();
+    this.gameLoop();
   }
 
   private attachEventListeners(): void {
@@ -68,23 +72,37 @@ class Game {
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    // Update character position based on arrow key input
+    // Update character direction based on arrow key input without moving here
     switch (event.key) {
       case "ArrowUp":
-        this.character.y -= this.speed;
         this.character.direction = "up";
         break;
       case "ArrowDown":
-        this.character.y += this.speed;
         this.character.direction = "down";
         break;
       case "ArrowLeft":
-        this.character.x -= this.speed;
         this.character.direction = "left";
         break;
       case "ArrowRight":
-        this.character.x += this.speed;
         this.character.direction = "right";
+        break;
+    }
+  }
+
+  private moveCharacter(): void {
+    // Update character position based on the current direction
+    switch (this.character.direction) {
+      case "up":
+        this.character.y -= this.speed;
+        break;
+      case "down":
+        this.character.y += this.speed;
+        break;
+      case "left":
+        this.character.x -= this.speed;
+        break;
+      case "right":
+        this.character.x += this.speed;
         break;
     }
 
@@ -114,6 +132,12 @@ class Game {
       }
     }
 
+    this.draw();
+  }
+
+  private gameLoop(): void {
+    requestAnimationFrame(() => this.gameLoop());
+    this.moveCharacter();
     this.draw();
   }
 
@@ -184,7 +208,12 @@ class Game {
   private resetGame(): void {
     this.resetStartingPossition();
     this.lives = 3;
+    this.resetObstacles();
     this.draw();
+  }
+
+  private resetObstacles(): void {
+    this.obstacles = this.initialObstacles.map((obstacle) => ({ ...obstacle }));
   }
 
   private resetStartingPossition(): void {
