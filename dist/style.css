@@ -1,4 +1,8 @@
 canvas{
     background-color: black;
     border:2px black solid;  
+    background-image: url(assets/bgr.avif);
+    background-position: center;
+    background-size: cover;
+    
 }
