@@ -5,7 +5,7 @@ el.innerHTML = `
  `;
 appContainer?.appendChild(el);
 
-interface Character {
+interface Player {
   x: number;
   y: number;
   size: number;
@@ -20,19 +20,21 @@ enum Direction {
   None = "none",
 }
 
+interface Enemy {
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
+  direction: "horizontal" | "vertical";
+}
+
 class Game {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
-  private character: Character;
-  private characterImage: HTMLImageElement;
+  private player: Player;
+  private playerImage: HTMLImageElement;
   private obstacleImage: HTMLImageElement;
-  private obstacles: {
-    x: number;
-    y: number;
-    size: number;
-    speed: number;
-    direction: string;
-  }[];
+  private enemies: Enemy[];
   private speed: number = 5;
   private lives: number = 3;
   private startingPossition = {
@@ -41,7 +43,7 @@ class Game {
   };
   private keyStates: Set<string> = new Set();
 
-  private initialObstacles = [
+  private initialEnemies: Enemy[] = [
     { x: 100, y: 150, size: 50, speed: 1, direction: "horizontal" },
     { x: 200, y: 300, size: 45, speed: 1, direction: "vertical" },
     { x: 550, y: 450, size: 60, speed: 1, direction: "horizontal" },
@@ -52,22 +54,22 @@ class Game {
   constructor(canvasId: string) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d")!;
-    this.character = {
+    this.player = {
       x: this.startingPossition.x,
       y: this.startingPossition.y,
       size: 50,
       direction: Direction.None,
     };
 
-    this.characterImage = new Image();
-    this.characterImage.onload = () => this.draw();
-    this.characterImage.src = "../assets/rocket.svg";
+    this.playerImage = new Image();
+    this.playerImage.onload = () => this.draw();
+    this.playerImage.src = "../assets/rocket.svg";
 
     this.obstacleImage = new Image();
     this.obstacleImage.onload = () => this.draw();
     this.obstacleImage.src = "../assets/star.svg";
 
-    this.obstacles = this.initialObstacles.map((obstacle) => ({ ...obstacle }));
+    this.enemies = this.initialEnemies.map((obstacle) => ({ ...obstacle }));
 
     this.attachEventListeners();
     this.draw();
@@ -88,52 +90,52 @@ class Game {
     this.keyStates.delete(event.key);
   }
 
-  private moveCharacter(): void {
+  private movePlayer(): void {
     const isUp = this.keyStates.has("ArrowUp") || this.keyStates.has("w");
     const isDown = this.keyStates.has("ArrowDown") || this.keyStates.has("s");
     const isLeft = this.keyStates.has("ArrowLeft") || this.keyStates.has("a");
     const isRight = this.keyStates.has("ArrowRight") || this.keyStates.has("d");
 
     if (isUp && isLeft) {
-      this.character.direction = Direction.Left;
-      this.character.x -= this.speed;
-      this.character.y -= this.speed;
+      this.player.direction = Direction.Left;
+      this.player.x -= this.speed;
+      this.player.y -= this.speed;
     } else if (isUp && isRight) {
-      this.character.direction = Direction.Down;
-      this.character.x += this.speed;
-      this.character.y -= this.speed;
+      this.player.direction = Direction.Down;
+      this.player.x += this.speed;
+      this.player.y -= this.speed;
     } else if (isDown && isLeft) {
-      this.character.direction = Direction.Left;
-      this.character.x -= this.speed;
-      this.character.y += this.speed;
+      this.player.direction = Direction.Left;
+      this.player.x -= this.speed;
+      this.player.y += this.speed;
     } else if (isDown && isRight) {
-      this.character.direction = Direction.Right;
-      this.character.x += this.speed;
-      this.character.y += this.speed;
+      this.player.direction = Direction.Right;
+      this.player.x += this.speed;
+      this.player.y += this.speed;
     } else if (isUp) {
-      this.character.direction = Direction.Up;
-      this.character.y -= this.speed;
+      this.player.direction = Direction.Up;
+      this.player.y -= this.speed;
     } else if (isDown) {
-      this.character.direction = Direction.Down;
-      this.character.y += this.speed;
+      this.player.direction = Direction.Down;
+      this.player.y += this.speed;
     } else if (isLeft) {
-      this.character.direction = Direction.Left;
-      this.character.x -= this.speed;
+      this.player.direction = Direction.Left;
+      this.player.x -= this.speed;
     } else if (isRight) {
-      this.character.direction = Direction.Right;
-      this.character.x += this.speed;
+      this.player.direction = Direction.Right;
+      this.player.x += this.speed;
     }
 
-    if (this.character.x < 0) {
-      this.character.x = this.canvas.width - this.character.size;
-    } else if (this.character.x + this.character.size > this.canvas.width) {
-      this.character.x = 0;
+    if (this.player.x < 0) {
+      this.player.x = this.canvas.width - this.player.size;
+    } else if (this.player.x + this.player.size > this.canvas.width) {
+      this.player.x = 0;
     }
 
-    if (this.character.y < 0) {
-      this.character.y = this.canvas.height - this.character.size;
-    } else if (this.character.y + this.character.size > this.canvas.height) {
-      this.character.y = 0;
+    if (this.player.y < 0) {
+      this.player.y = this.canvas.height - this.player.size;
+    } else if (this.player.y + this.player.size > this.canvas.height) {
+      this.player.y = 0;
     }
 
     if (this.checkCollision()) {
@@ -152,12 +154,12 @@ class Game {
 
   private gameLoop(): void {
     requestAnimationFrame(() => this.gameLoop());
-    this.moveCharacter();
+    this.movePlayer();
     this.draw();
   }
 
-  private drawObstacles(): void {
-    for (const obstacle of this.obstacles) {
+  private drawEnemies(): void {
+    for (const obstacle of this.enemies) {
       this.ctx.drawImage(
         this.obstacleImage,
         obstacle.x,
@@ -168,12 +170,12 @@ class Game {
     }
   }
   private checkCollision(): boolean {
-    for (const obstacle of this.obstacles) {
+    for (const obstacle of this.enemies) {
       if (
-        this.character.x < obstacle.x + obstacle.size &&
-        this.character.x + this.character.size > obstacle.x &&
-        this.character.y < obstacle.y + obstacle.size &&
-        this.character.y + this.character.size > obstacle.y
+        this.player.x < obstacle.x + obstacle.size &&
+        this.player.x + this.player.size > obstacle.x &&
+        this.player.y < obstacle.y + obstacle.size &&
+        this.player.y + this.player.size > obstacle.y
       ) {
         return true;
       }
@@ -186,7 +188,7 @@ class Game {
 
     // Determine rotation based on the direction
     let rotationAngle = 0; // Default direction is to the right
-    switch (this.character.direction) {
+    switch (this.player.direction) {
       case Direction.Up:
         rotationAngle = Math.PI * 2; // 1.5; // 270 degrees to face up
         break;
@@ -203,23 +205,23 @@ class Game {
 
     this.ctx.save();
     this.ctx.translate(
-      this.character.x + this.character.size / 2,
-      this.character.y + this.character.size / 2
+      this.player.x + this.player.size / 2,
+      this.player.y + this.player.size / 2
     );
     this.ctx.rotate(rotationAngle);
 
     this.ctx.drawImage(
-      this.characterImage,
-      -this.character.size / 2,
-      -this.character.size / 2,
-      this.character.size,
-      this.character.size
+      this.playerImage,
+      -this.player.size / 2,
+      -this.player.size / 2,
+      this.player.size,
+      this.player.size
     );
 
     this.ctx.restore();
 
-    this.drawObstacles();
-    this.moveObstacles();
+    this.drawEnemies();
+    this.moveEnemies();
 
     this.displayLives();
   }
@@ -227,21 +229,21 @@ class Game {
   private resetGame(): void {
     this.resetStartingPossition();
     this.lives = 3;
-    this.resetObstacles();
+    this.resetEnemies();
     this.draw();
   }
 
-  private resetObstacles(): void {
-    this.obstacles = this.initialObstacles.map((obstacle) => ({ ...obstacle }));
+  private resetEnemies(): void {
+    this.enemies = this.initialEnemies.map((obstacle) => ({ ...obstacle }));
   }
 
   private resetStartingPossition(): void {
-    this.character.x = this.startingPossition.x;
-    this.character.y = this.startingPossition.y;
+    this.player.x = this.startingPossition.x;
+    this.player.y = this.startingPossition.y;
   }
 
-  private moveObstacles(): void {
-    this.obstacles.forEach((obstacle) => {
+  private moveEnemies(): void {
+    this.enemies.forEach((obstacle) => {
       if (obstacle.direction === "horizontal") {
         obstacle.x += obstacle.speed;
         if (obstacle.x > this.canvas.width - obstacle.size || obstacle.x < 0) {
