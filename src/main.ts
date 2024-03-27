@@ -39,7 +39,7 @@ class Game {
     x: 300,
     y: 200,
   };
-  private movementInterval: number | null = null;
+  private keyStates: Set<string> = new Set();
 
   private initialObstacles = [
     { x: 100, y: 150, size: 50, speed: 1, direction: "horizontal" },
@@ -61,7 +61,7 @@ class Game {
 
     this.characterImage = new Image();
     this.characterImage.onload = () => this.draw();
-    this.characterImage.src = "../assets/caret-down.svg";
+    this.characterImage.src = "../assets/rocket.svg";
 
     this.obstacleImage = new Image();
     this.obstacleImage.onload = () => this.draw();
@@ -75,53 +75,55 @@ class Game {
   }
 
   private attachEventListeners(): void {
+    //window.addEventListener("keydown", this.handleKeyDown.bind(this));
     window.addEventListener("keydown", this.handleKeyDown.bind(this));
+    window.addEventListener("keyup", this.handleKeyUp.bind(this));
   }
 
   private handleKeyDown(event: KeyboardEvent): void {
-    switch (event.key) {
-      case "ArrowUp":
-      case "W":
-      case "w":
-        this.character.direction = Direction.Up;
-        break;
-      case "ArrowDown":
-      case "S":
-      case "s":
-        this.character.direction = Direction.Down;
-        break;
-      case "ArrowLeft":
-      case "A":
-      case "a":
-        this.character.direction = Direction.Left;
-        break;
-      case "ArrowRight":
-      case "D":
-      case "d":
-        this.character.direction = Direction.Right;
-        break;
-    }
+    this.keyStates.add(event.key);
   }
+
+  private handleKeyUp(event: KeyboardEvent): void {
+    this.keyStates.delete(event.key);
+  }
+
   private moveCharacter(): void {
-    if (this.character.direction === Direction.None) {
-      return;
-    }
-    switch (this.character.direction) {
-      case "up":
-        this.character.y -= this.speed;
-        break;
-      case "down":
-        this.character.y += this.speed;
-        break;
-      case "left":
-        this.character.x -= this.speed;
-        break;
-      case "right":
-        this.character.x += this.speed;
-        break;
+    const isUp = this.keyStates.has("ArrowUp") || this.keyStates.has("w");
+    const isDown = this.keyStates.has("ArrowDown") || this.keyStates.has("s");
+    const isLeft = this.keyStates.has("ArrowLeft") || this.keyStates.has("a");
+    const isRight = this.keyStates.has("ArrowRight") || this.keyStates.has("d");
+
+    if (isUp && isLeft) {
+      this.character.direction = Direction.Left;
+      this.character.x -= this.speed;
+      this.character.y -= this.speed;
+    } else if (isUp && isRight) {
+      this.character.direction = Direction.Down;
+      this.character.x += this.speed;
+      this.character.y -= this.speed;
+    } else if (isDown && isLeft) {
+      this.character.direction = Direction.Left;
+      this.character.x -= this.speed;
+      this.character.y += this.speed;
+    } else if (isDown && isRight) {
+      this.character.direction = Direction.Right;
+      this.character.x += this.speed;
+      this.character.y += this.speed;
+    } else if (isUp) {
+      this.character.direction = Direction.Up;
+      this.character.y -= this.speed;
+    } else if (isDown) {
+      this.character.direction = Direction.Down;
+      this.character.y += this.speed;
+    } else if (isLeft) {
+      this.character.direction = Direction.Left;
+      this.character.x -= this.speed;
+    } else if (isRight) {
+      this.character.direction = Direction.Right;
+      this.character.x += this.speed;
     }
 
-    // Wrap around logic for moving out of canvas boundaries
     if (this.character.x < 0) {
       this.character.x = this.canvas.width - this.character.size;
     } else if (this.character.x + this.character.size > this.canvas.width) {
@@ -134,11 +136,9 @@ class Game {
       this.character.y = 0;
     }
 
-    // Check for collisions with obstacles after potentially wrapping
     if (this.checkCollision()) {
       this.lives--;
 
-      // Do not reset to starting position here; just decrement lives
       if (this.lives === 0) {
         alert("Spelet är slut");
         this.resetGame();
@@ -184,25 +184,29 @@ class Game {
   private draw(): void {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
+    // Determine rotation based on the direction
+    let rotationAngle = 0; // Default direction is to the right
+    switch (this.character.direction) {
+      case Direction.Up:
+        rotationAngle = Math.PI * 2; // 1.5; // 270 degrees to face up
+        break;
+      case Direction.Down:
+        rotationAngle = Math.PI; // 90 degrees to face down
+        break;
+      case Direction.Left:
+        rotationAngle = Math.PI * 1.5; // 180 degrees to face left
+        break;
+      case Direction.Right:
+        rotationAngle = Math.PI * 0.5; // 0 degrees to face right
+        break;
+    }
+
     this.ctx.save();
     this.ctx.translate(
       this.character.x + this.character.size / 2,
       this.character.y + this.character.size / 2
     );
-    switch (this.character.direction) {
-      case "up":
-        this.ctx.rotate(Math.PI);
-        break;
-      case "down":
-        this.ctx.rotate(0);
-        break;
-      case "left":
-        this.ctx.rotate(Math.PI / 2);
-        break;
-      case "right":
-        this.ctx.rotate(-Math.PI / 2);
-        break;
-    }
+    this.ctx.rotate(rotationAngle);
 
     this.ctx.drawImage(
       this.characterImage,
