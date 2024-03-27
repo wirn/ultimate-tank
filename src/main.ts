@@ -48,7 +48,9 @@ class Game {
     { x: 200, y: 300, size: 45, speed: 1, direction: "vertical" },
     { x: 550, y: 450, size: 60, speed: 1, direction: "horizontal" },
     { x: 300, y: 500, size: 40, speed: 1, direction: "vertical" },
-    { x: 750, y: 100, size: 40, speed: 1, direction: "horizontal" },
+    { x: 750, y: 150, size: 40, speed: 1, direction: "horizontal" },
+    { x: 150, y: 100, size: 35, speed: 1, direction: "vertical" },
+    { x: 550, y: 550, size: 55, speed: 1, direction: "horizontal" },
   ];
 
   constructor(canvasId: string) {
@@ -91,41 +93,34 @@ class Game {
   }
 
   private movePlayer(): void {
-    const isUp = this.keyStates.has("ArrowUp") || this.keyStates.has("w");
-    const isDown = this.keyStates.has("ArrowDown") || this.keyStates.has("s");
-    const isLeft = this.keyStates.has("ArrowLeft") || this.keyStates.has("a");
-    const isRight = this.keyStates.has("ArrowRight") || this.keyStates.has("d");
-
-    if (isUp && isLeft) {
-      this.player.direction = Direction.Left;
-      this.player.x -= this.speed;
-      this.player.y -= this.speed;
-    } else if (isUp && isRight) {
-      this.player.direction = Direction.Down;
-      this.player.x += this.speed;
-      this.player.y -= this.speed;
-    } else if (isDown && isLeft) {
-      this.player.direction = Direction.Left;
-      this.player.x -= this.speed;
-      this.player.y += this.speed;
-    } else if (isDown && isRight) {
-      this.player.direction = Direction.Right;
-      this.player.x += this.speed;
-      this.player.y += this.speed;
-    } else if (isUp) {
+    // Checking for movement keys being pressed and setting direction
+    if (this.keyStates.has("ArrowUp") || this.keyStates.has("w")) {
       this.player.direction = Direction.Up;
-      this.player.y -= this.speed;
-    } else if (isDown) {
+    } else if (this.keyStates.has("ArrowDown") || this.keyStates.has("s")) {
       this.player.direction = Direction.Down;
-      this.player.y += this.speed;
-    } else if (isLeft) {
+    } else if (this.keyStates.has("ArrowLeft") || this.keyStates.has("a")) {
       this.player.direction = Direction.Left;
-      this.player.x -= this.speed;
-    } else if (isRight) {
+    } else if (this.keyStates.has("ArrowRight") || this.keyStates.has("d")) {
       this.player.direction = Direction.Right;
-      this.player.x += this.speed;
     }
 
+    // Moving the player in the current direction
+    switch (this.player.direction) {
+      case Direction.Up:
+        this.player.y -= this.speed;
+        break;
+      case Direction.Down:
+        this.player.y += this.speed;
+        break;
+      case Direction.Left:
+        this.player.x -= this.speed;
+        break;
+      case Direction.Right:
+        this.player.x += this.speed;
+        break;
+    }
+
+    // Handle wrapping around the canvas edges
     if (this.player.x < 0) {
       this.player.x = this.canvas.width - this.player.size;
     } else if (this.player.x + this.player.size > this.canvas.width) {
@@ -138,11 +133,12 @@ class Game {
       this.player.y = 0;
     }
 
+    // Check for collisions with enemies
     if (this.checkCollision()) {
       this.lives--;
 
       if (this.lives === 0) {
-        alert("Spelet är slut");
+        alert("Game Over");
         this.resetGame();
       } else {
         this.resetStartingPossition();
