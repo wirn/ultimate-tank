@@ -33,7 +33,7 @@ class Game {
   private ctx: CanvasRenderingContext2D;
   private player: Player;
   private playerImage: HTMLImageElement;
-  private obstacleImage: HTMLImageElement;
+  private enemyImage: HTMLImageElement;
   private enemies: Enemy[];
   private speed: number = 5;
   private lives: number = 3;
@@ -65,11 +65,11 @@ class Game {
     this.playerImage.onload = () => this.draw();
     this.playerImage.src = "../assets/rocket.svg";
 
-    this.obstacleImage = new Image();
-    this.obstacleImage.onload = () => this.draw();
-    this.obstacleImage.src = "../assets/star.svg";
+    this.enemyImage = new Image();
+    this.enemyImage.onload = () => this.draw();
+    this.enemyImage.src = "../assets/star.svg";
 
-    this.enemies = this.initialEnemies.map((obstacle) => ({ ...obstacle }));
+    this.enemies = this.initialEnemies.map((enemy) => ({ ...enemy }));
 
     this.attachEventListeners();
     this.draw();
@@ -159,23 +159,23 @@ class Game {
   }
 
   private drawEnemies(): void {
-    for (const obstacle of this.enemies) {
+    for (const enemy of this.enemies) {
       this.ctx.drawImage(
-        this.obstacleImage,
-        obstacle.x,
-        obstacle.y,
-        obstacle.size,
-        obstacle.size
+        this.enemyImage,
+        enemy.x,
+        enemy.y,
+        enemy.size,
+        enemy.size
       );
     }
   }
   private checkCollision(): boolean {
-    for (const obstacle of this.enemies) {
+    for (const enemy of this.enemies) {
       if (
-        this.player.x < obstacle.x + obstacle.size &&
-        this.player.x + this.player.size > obstacle.x &&
-        this.player.y < obstacle.y + obstacle.size &&
-        this.player.y + this.player.size > obstacle.y
+        this.player.x < enemy.x + enemy.size &&
+        this.player.x + this.player.size > enemy.x &&
+        this.player.y < enemy.y + enemy.size &&
+        this.player.y + this.player.size > enemy.y
       ) {
         return true;
       }
@@ -234,7 +234,7 @@ class Game {
   }
 
   private resetEnemies(): void {
-    this.enemies = this.initialEnemies.map((obstacle) => ({ ...obstacle }));
+    this.enemies = this.initialEnemies.map((enemy) => ({ ...enemy }));
   }
 
   private resetStartingPossition(): void {
@@ -243,17 +243,16 @@ class Game {
   }
 
   private moveEnemies(): void {
-    this.enemies.forEach((obstacle) => {
-      if (obstacle.direction === "horizontal") {
-        obstacle.x += obstacle.speed;
-        if (obstacle.x > this.canvas.width - obstacle.size || obstacle.x < 0) {
-          obstacle.speed *= -1; // Change direction
+    this.enemies.forEach((enemy) => {
+      if (enemy.direction === "horizontal") {
+        enemy.x += enemy.speed;
+        if (enemy.x > this.canvas.width - enemy.size || enemy.x < 0) {
+          enemy.speed *= -1;
         }
       } else {
-        // "vertical"
-        obstacle.y += obstacle.speed;
-        if (obstacle.y > this.canvas.height - obstacle.size || obstacle.y < 0) {
-          obstacle.speed *= -1; // Change direction
+        enemy.y += enemy.speed;
+        if (enemy.y > this.canvas.height - enemy.size || enemy.y < 0) {
+          enemy.speed *= -1;
         }
       }
     });
@@ -261,12 +260,11 @@ class Game {
 
   private displayLives(): void {
     this.ctx.font = "20px Arial";
-    this.ctx.fillStyle = "black";
-    this.ctx.fillText(`Liv: ${this.lives}`, 10, 30); // Visar antalet liv i övre vänstra hörnet
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`Liv: ${this.lives}`, 10, 30);
   }
 }
 
-// Initialize the game when the page has loaded
 window.onload = () => {
   new Game("gameCanvas");
 };
