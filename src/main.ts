@@ -315,7 +315,10 @@ class Game {
   }
 
   private resetEnemies(): void {
-    this.enemies = this.initialEnemies.map((enemy) => ({ ...enemy }));
+    this.enemies = this.initialEnemies.map((enemy) => ({
+      ...enemy,
+      speed: 1 + (this.level - 1) * 0.5, // Adjusting speed based on level
+    }));
   }
 
   private resetStartingPossition(): void {
