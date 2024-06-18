@@ -38,6 +38,7 @@ class Game {
   private enemies: Enemy[];
   private speed: number = 5;
   private lives: number = 3;
+  private level: number = 1;
   private startingPossition = {
     x: 300,
     y: 200,
@@ -82,7 +83,6 @@ class Game {
   }
 
   private attachEventListeners(): void {
-    //window.addEventListener("keydown", this.handleKeyDown.bind(this));
     window.addEventListener("keydown", this.handleKeyDown.bind(this));
     window.addEventListener("keyup", this.handleKeyUp.bind(this));
   }
@@ -160,6 +160,7 @@ class Game {
     this.moveProjectiles();
     this.checkProjectileCollisions();
     this.draw();
+    this.checkLevelProgress();
   }
 
   private moveProjectiles(): void {
@@ -302,11 +303,13 @@ class Game {
     this.drawEnemies();
     this.moveEnemies();
     this.displayLives();
+    this.displayLevel();
   }
 
   private resetGame(): void {
     this.resetStartingPossition();
     this.lives = 3;
+    this.level = 1;
     this.resetEnemies();
     this.draw();
   }
@@ -340,6 +343,19 @@ class Game {
     this.ctx.font = "20px Arial";
     this.ctx.fillStyle = "white";
     this.ctx.fillText(`Liv: ${this.lives}`, 10, 30);
+  }
+
+  private displayLevel(): void {
+    this.ctx.font = "20px Arial";
+    this.ctx.fillStyle = "white";
+    this.ctx.fillText(`Nivå: ${this.level}`, this.canvas.width - 100, 30);
+  }
+
+  private checkLevelProgress(): void {
+    if (this.enemies.length === 0) {
+      this.level++;
+      this.resetEnemies();
+    }
   }
 }
 
