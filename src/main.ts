@@ -1,14 +1,15 @@
-const appContainer = document.getElementById("app");
-const el = document.createElement("div");
-el.innerHTML = `
-  <h1>Ultimate Tank!</h1>
- `;
-appContainer?.appendChild(el);
-
 interface Player {
   x: number;
   y: number;
   size: number;
+  direction: Direction;
+}
+
+interface Projectile {
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
   direction: Direction;
 }
 
@@ -53,6 +54,8 @@ class Game {
     { x: 550, y: 550, size: 55, speed: 1, direction: "horizontal" },
   ];
 
+  private projectiles: Projectile[] = [];
+
   constructor(canvasId: string) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d")!;
@@ -86,6 +89,9 @@ class Game {
 
   private handleKeyDown(event: KeyboardEvent): void {
     this.keyStates.add(event.key);
+    if (event.key === " ") {
+      this.shootProjectile();
+    }
   }
 
   private handleKeyUp(event: KeyboardEvent): void {
@@ -151,7 +157,67 @@ class Game {
   private gameLoop(): void {
     requestAnimationFrame(() => this.gameLoop());
     this.movePlayer();
+    this.moveProjectiles();
+    this.checkProjectileCollisions();
     this.draw();
+  }
+
+  private moveProjectiles(): void {
+    this.projectiles.forEach((projectile, index) => {
+      switch (projectile.direction) {
+        case Direction.Up:
+          projectile.y -= projectile.speed;
+          break;
+        case Direction.Down:
+          projectile.y += projectile.speed;
+          break;
+        case Direction.Left:
+          projectile.x -= projectile.speed;
+          break;
+        case Direction.Right:
+          projectile.x += projectile.speed;
+          break;
+      }
+
+      // Ta bort projektilen om den är utanför canvas
+      if (
+        projectile.x < 0 ||
+        projectile.x > this.canvas.width ||
+        projectile.y < 0 ||
+        projectile.y > this.canvas.height
+      ) {
+        this.projectiles.splice(index, 1);
+      }
+    });
+  }
+
+  private drawProjectiles(): void {
+    this.ctx.fillStyle = "red";
+    this.projectiles.forEach((projectile) => {
+      this.ctx.fillRect(
+        projectile.x,
+        projectile.y,
+        projectile.size,
+        projectile.size
+      );
+    });
+  }
+
+  private checkProjectileCollisions(): void {
+    this.projectiles.forEach((projectile, pIndex) => {
+      this.enemies.forEach((enemy, eIndex) => {
+        if (
+          projectile.x < enemy.x + enemy.size &&
+          projectile.x + projectile.size > enemy.x &&
+          projectile.y < enemy.y + enemy.size &&
+          projectile.y + projectile.size > enemy.y
+        ) {
+          // Ta bort projektil och fiende vid kollision
+          this.projectiles.splice(pIndex, 1);
+          this.enemies.splice(eIndex, 1);
+        }
+      });
+    });
   }
 
   private drawEnemies(): void {
@@ -165,6 +231,22 @@ class Game {
       );
     }
   }
+
+  private shootProjectile(): void {
+    const projectileSize = 10;
+    const projectileSpeed = 10;
+
+    const projectile: Projectile = {
+      x: this.player.x + this.player.size / 2 - projectileSize / 2,
+      y: this.player.y + this.player.size / 2 - projectileSize / 2,
+      size: projectileSize,
+      speed: projectileSpeed,
+      direction: this.player.direction,
+    };
+
+    this.projectiles.push(projectile);
+  }
+
   private checkCollision(): boolean {
     for (const enemy of this.enemies) {
       if (
@@ -216,9 +298,9 @@ class Game {
 
     this.ctx.restore();
 
+    this.drawProjectiles();
     this.drawEnemies();
     this.moveEnemies();
-
     this.displayLives();
   }
 
