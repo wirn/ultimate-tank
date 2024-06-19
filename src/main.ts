@@ -64,11 +64,6 @@ class Game {
     { x: 550, y: 550, size: 55, speed: 0.5, direction: "horizontal" },
   ];
 
-  private initialNonShootableEnemies: NonShootableEnemy[] = [
-    { x: 50, y: 50, size: 40, speed: 0.5, direction: "horizontal" },
-    { x: 700, y: 400, size: 50, speed: 0.5, direction: "vertical" },
-  ];
-
   private projectiles: Projectile[] = [];
 
   constructor(canvasId: string) {
@@ -96,9 +91,7 @@ class Game {
     this.nonShootableEnemyImage.src = "../assets/stars.svg";
 
     this.enemies = this.initialEnemies.map((enemy) => ({ ...enemy }));
-    this.nonShootableEnemies = this.initialNonShootableEnemies.map((enemy) => ({
-      ...enemy,
-    }));
+    this.nonShootableEnemies = this.createNonShootableEnemies(this.level);
 
     this.attachEventListeners();
     this.draw();
@@ -381,10 +374,21 @@ class Game {
   }
 
   private resetNonShootableEnemies(): void {
-    this.nonShootableEnemies = this.initialNonShootableEnemies.map((enemy) => ({
-      ...enemy,
-      speed: 0.5 + (this.level - 1) * 0.25, // Justering av hastighet baserat på nivå
-    }));
+    this.nonShootableEnemies = this.createNonShootableEnemies(this.level);
+  }
+
+  private createNonShootableEnemies(level: number): NonShootableEnemy[] {
+    const nonShootableEnemies: NonShootableEnemy[] = [];
+    for (let i = 0; i < level; i++) {
+      nonShootableEnemies.push({
+        x: Math.random() * this.canvas.width,
+        y: Math.random() * this.canvas.height,
+        size: 40,
+        speed: 0.5 + (this.level - 1) * 0.25, // Justering av hastighet baserat på nivå
+        direction: Math.random() > 0.5 ? "horizontal" : "vertical",
+      });
+    }
+    return nonShootableEnemies;
   }
 
   private resetStartingPosition(): void {
@@ -457,10 +461,6 @@ class Game {
     }
   }
 }
-
-window.onload = () => {
-  new Game("gameCanvas");
-};
 
 window.onload = () => {
   new Game("gameCanvas");
