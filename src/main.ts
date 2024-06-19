@@ -42,8 +42,8 @@ class Game {
   private nonShootableEnemyImage: HTMLImageElement;
   private enemies: Enemy[];
   private nonShootableEnemies: NonShootableEnemy[];
-  private acceleration: number = 0.1;
-  private maxSpeed: number = 5;
+  private acceleration: number = 0.06; // Sänkt acceleration
+  private maxSpeed: number = 4; // Sänkt maxhastighet
   private lives: number = 3;
   private level: number = 1;
   private startingPosition = {
@@ -51,20 +51,22 @@ class Game {
     y: 200,
   };
   private keyStates: Set<string> = new Set();
+  private initialDelay: number = 2000;
+  private gameStartTime: number;
 
   private initialEnemies: Enemy[] = [
-    { x: 100, y: 150, size: 50, speed: 1, direction: "horizontal" },
-    { x: 200, y: 300, size: 45, speed: 1, direction: "vertical" },
-    { x: 550, y: 450, size: 60, speed: 1, direction: "horizontal" },
-    { x: 300, y: 500, size: 40, speed: 1, direction: "vertical" },
-    { x: 750, y: 150, size: 40, speed: 1, direction: "horizontal" },
-    { x: 150, y: 100, size: 35, speed: 1, direction: "vertical" },
-    { x: 550, y: 550, size: 55, speed: 1, direction: "horizontal" },
+    { x: 100, y: 150, size: 50, speed: 0.5, direction: "horizontal" },
+    { x: 200, y: 300, size: 45, speed: 0.5, direction: "vertical" },
+    { x: 550, y: 450, size: 60, speed: 0.5, direction: "horizontal" },
+    { x: 300, y: 500, size: 40, speed: 0.5, direction: "vertical" },
+    { x: 750, y: 150, size: 40, speed: 0.5, direction: "horizontal" },
+    { x: 150, y: 100, size: 35, speed: 0.5, direction: "vertical" },
+    { x: 550, y: 550, size: 55, speed: 0.5, direction: "horizontal" },
   ];
 
   private initialNonShootableEnemies: NonShootableEnemy[] = [
-    { x: 50, y: 50, size: 40, speed: 1, direction: "horizontal" },
-    { x: 700, y: 400, size: 50, speed: 1, direction: "vertical" },
+    { x: 50, y: 50, size: 40, speed: 0.5, direction: "horizontal" },
+    { x: 700, y: 400, size: 50, speed: 0.5, direction: "vertical" },
   ];
 
   private projectiles: Projectile[] = [];
@@ -100,6 +102,7 @@ class Game {
 
     this.attachEventListeners();
     this.draw();
+    this.gameStartTime = Date.now();
     this.gameLoop();
   }
 
@@ -120,6 +123,11 @@ class Game {
   }
 
   private movePlayer(): void {
+    const currentTime = Date.now();
+    if (currentTime - this.gameStartTime < this.initialDelay) {
+      return; // Vänta tills initial väntetid är över
+    }
+
     if (this.keyStates.has("ArrowUp") || this.keyStates.has("w")) {
       this.player.vy = Math.max(
         this.player.vy - this.acceleration,
@@ -187,6 +195,11 @@ class Game {
   }
 
   private moveProjectiles(): void {
+    const currentTime = Date.now();
+    if (currentTime - this.gameStartTime < this.initialDelay) {
+      return; // Vänta tills initial väntetid är över
+    }
+
     this.projectiles.forEach((projectile, index) => {
       switch (projectile.direction) {
         case Direction.Up:
@@ -356,20 +369,21 @@ class Game {
     this.resetEnemies();
     this.resetNonShootableEnemies();
     this.player.direction = Direction.None;
+    this.gameStartTime = Date.now();
     this.draw();
   }
 
   private resetEnemies(): void {
     this.enemies = this.initialEnemies.map((enemy) => ({
       ...enemy,
-      speed: 1 + (this.level - 1) * 0.5, // Adjusting speed based on level
+      speed: 0.5 + (this.level - 1) * 0.25, // Justering av hastighet baserat på nivå
     }));
   }
 
   private resetNonShootableEnemies(): void {
     this.nonShootableEnemies = this.initialNonShootableEnemies.map((enemy) => ({
       ...enemy,
-      speed: 1 + (this.level - 1) * 0.5, // Adjusting speed based on level
+      speed: 0.5 + (this.level - 1) * 0.25, // Justering av hastighet baserat på nivå
     }));
   }
 
@@ -382,6 +396,11 @@ class Game {
   }
 
   private moveEnemies(): void {
+    const currentTime = Date.now();
+    if (currentTime - this.gameStartTime < this.initialDelay) {
+      return; // Vänta tills initial väntetid är över
+    }
+
     this.enemies.forEach((enemy) => {
       if (enemy.direction === "horizontal") {
         enemy.x += enemy.speed;
@@ -398,6 +417,11 @@ class Game {
   }
 
   private moveNonShootableEnemies(): void {
+    const currentTime = Date.now();
+    if (currentTime - this.gameStartTime < this.initialDelay) {
+      return; // Vänta tills initial väntetid är över
+    }
+
     this.nonShootableEnemies.forEach((enemy) => {
       if (enemy.direction === "horizontal") {
         enemy.x += enemy.speed;
@@ -433,6 +457,10 @@ class Game {
     }
   }
 }
+
+window.onload = () => {
+  new Game("gameCanvas");
+};
 
 window.onload = () => {
   new Game("gameCanvas");
