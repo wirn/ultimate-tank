@@ -31,13 +31,17 @@ interface Enemy {
   direction: "horizontal" | "vertical";
 }
 
+interface NonShootableEnemy extends Enemy {}
+
 class Game {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private player: Player;
   private playerImage: HTMLImageElement;
   private enemyImage: HTMLImageElement;
+  private nonShootableEnemyImage: HTMLImageElement;
   private enemies: Enemy[];
+  private nonShootableEnemies: NonShootableEnemy[];
   private acceleration: number = 0.1;
   private maxSpeed: number = 5;
   private lives: number = 3;
@@ -56,6 +60,11 @@ class Game {
     { x: 750, y: 150, size: 40, speed: 1, direction: "horizontal" },
     { x: 150, y: 100, size: 35, speed: 1, direction: "vertical" },
     { x: 550, y: 550, size: 55, speed: 1, direction: "horizontal" },
+  ];
+
+  private initialNonShootableEnemies: NonShootableEnemy[] = [
+    { x: 50, y: 50, size: 40, speed: 1, direction: "horizontal" },
+    { x: 700, y: 400, size: 50, speed: 1, direction: "vertical" },
   ];
 
   private projectiles: Projectile[] = [];
@@ -80,7 +89,14 @@ class Game {
     this.enemyImage.onload = () => this.draw();
     this.enemyImage.src = "../assets/star.svg";
 
+    this.nonShootableEnemyImage = new Image();
+    this.nonShootableEnemyImage.onload = () => this.draw();
+    this.nonShootableEnemyImage.src = "../assets/stars.svg";
+
     this.enemies = this.initialEnemies.map((enemy) => ({ ...enemy }));
+    this.nonShootableEnemies = this.initialNonShootableEnemies.map((enemy) => ({
+      ...enemy,
+    }));
 
     this.attachEventListeners();
     this.draw();
@@ -238,6 +254,15 @@ class Game {
         enemy.size
       );
     }
+    for (const enemy of this.nonShootableEnemies) {
+      this.ctx.drawImage(
+        this.nonShootableEnemyImage,
+        enemy.x,
+        enemy.y,
+        enemy.size,
+        enemy.size
+      );
+    }
   }
 
   private shootProjectile(): void {
@@ -257,6 +282,16 @@ class Game {
 
   private checkCollision(): boolean {
     for (const enemy of this.enemies) {
+      if (
+        this.player.x < enemy.x + enemy.size &&
+        this.player.x + this.player.size > enemy.x &&
+        this.player.y < enemy.y + enemy.size &&
+        this.player.y + this.player.size > enemy.y
+      ) {
+        return true;
+      }
+    }
+    for (const enemy of this.nonShootableEnemies) {
       if (
         this.player.x < enemy.x + enemy.size &&
         this.player.x + this.player.size > enemy.x &&
@@ -309,6 +344,7 @@ class Game {
     this.drawProjectiles();
     this.drawEnemies();
     this.moveEnemies();
+    this.moveNonShootableEnemies();
     this.displayLives();
     this.displayLevel();
   }
@@ -318,12 +354,20 @@ class Game {
     this.lives = 3;
     this.level = 1;
     this.resetEnemies();
+    this.resetNonShootableEnemies();
     this.player.direction = Direction.None;
     this.draw();
   }
 
   private resetEnemies(): void {
     this.enemies = this.initialEnemies.map((enemy) => ({
+      ...enemy,
+      speed: 1 + (this.level - 1) * 0.5, // Adjusting speed based on level
+    }));
+  }
+
+  private resetNonShootableEnemies(): void {
+    this.nonShootableEnemies = this.initialNonShootableEnemies.map((enemy) => ({
       ...enemy,
       speed: 1 + (this.level - 1) * 0.5, // Adjusting speed based on level
     }));
@@ -339,6 +383,22 @@ class Game {
 
   private moveEnemies(): void {
     this.enemies.forEach((enemy) => {
+      if (enemy.direction === "horizontal") {
+        enemy.x += enemy.speed;
+        if (enemy.x > this.canvas.width - enemy.size || enemy.x < 0) {
+          enemy.speed *= -1;
+        }
+      } else {
+        enemy.y += enemy.speed;
+        if (enemy.y > this.canvas.height - enemy.size || enemy.y < 0) {
+          enemy.speed *= -1;
+        }
+      }
+    });
+  }
+
+  private moveNonShootableEnemies(): void {
+    this.nonShootableEnemies.forEach((enemy) => {
       if (enemy.direction === "horizontal") {
         enemy.x += enemy.speed;
         if (enemy.x > this.canvas.width - enemy.size || enemy.x < 0) {
@@ -369,6 +429,7 @@ class Game {
     if (this.enemies.length === 0) {
       this.level++;
       this.resetEnemies();
+      this.resetNonShootableEnemies();
     }
   }
 }

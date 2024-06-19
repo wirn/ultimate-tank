@@ -4,5 +4,7 @@ canvas{
     background-image: url(assets/bgr.avif);
     background-position: center;
     background-size: cover;
-    
+}
+svg{
+    fill:white
 }
