@@ -2,6 +2,8 @@ interface Player {
   x: number;
   y: number;
   size: number;
+  vx: number;
+  vy: number;
   direction: Direction;
 }
 
@@ -36,10 +38,11 @@ class Game {
   private playerImage: HTMLImageElement;
   private enemyImage: HTMLImageElement;
   private enemies: Enemy[];
-  private speed: number = 5;
+  private acceleration: number = 0.1;
+  private maxSpeed: number = 5;
   private lives: number = 3;
   private level: number = 1;
-  private startingPossition = {
+  private startingPosition = {
     x: 300,
     y: 200,
   };
@@ -61,9 +64,11 @@ class Game {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
     this.ctx = this.canvas.getContext("2d")!;
     this.player = {
-      x: this.startingPossition.x,
-      y: this.startingPossition.y,
+      x: this.startingPosition.x,
+      y: this.startingPosition.y,
       size: 50,
+      vx: 0,
+      vy: 0,
       direction: Direction.None,
     };
 
@@ -99,34 +104,36 @@ class Game {
   }
 
   private movePlayer(): void {
-    // Checking for movement keys being pressed and setting direction
     if (this.keyStates.has("ArrowUp") || this.keyStates.has("w")) {
+      this.player.vy = Math.max(
+        this.player.vy - this.acceleration,
+        -this.maxSpeed
+      );
       this.player.direction = Direction.Up;
     } else if (this.keyStates.has("ArrowDown") || this.keyStates.has("s")) {
+      this.player.vy = Math.min(
+        this.player.vy + this.acceleration,
+        this.maxSpeed
+      );
       this.player.direction = Direction.Down;
     } else if (this.keyStates.has("ArrowLeft") || this.keyStates.has("a")) {
+      this.player.vx = Math.max(
+        this.player.vx - this.acceleration,
+        -this.maxSpeed
+      );
       this.player.direction = Direction.Left;
     } else if (this.keyStates.has("ArrowRight") || this.keyStates.has("d")) {
+      this.player.vx = Math.min(
+        this.player.vx + this.acceleration,
+        this.maxSpeed
+      );
       this.player.direction = Direction.Right;
     }
 
-    // Moving the player in the current direction
-    switch (this.player.direction) {
-      case Direction.Up:
-        this.player.y -= this.speed;
-        break;
-      case Direction.Down:
-        this.player.y += this.speed;
-        break;
-      case Direction.Left:
-        this.player.x -= this.speed;
-        break;
-      case Direction.Right:
-        this.player.x += this.speed;
-        break;
-    }
+    // Apply velocity to player's position
+    this.player.x += this.player.vx;
+    this.player.y += this.player.vy;
 
-    // Handle wrapping around the canvas edges
     if (this.player.x < 0) {
       this.player.x = this.canvas.width - this.player.size;
     } else if (this.player.x + this.player.size > this.canvas.width) {
@@ -147,7 +154,7 @@ class Game {
         alert("Game Over");
         this.resetGame();
       } else {
-        this.resetStartingPossition();
+        this.resetStartingPosition();
       }
     }
 
@@ -307,10 +314,11 @@ class Game {
   }
 
   private resetGame(): void {
-    this.resetStartingPossition();
+    this.resetStartingPosition();
     this.lives = 3;
     this.level = 1;
     this.resetEnemies();
+    this.player.direction = Direction.None;
     this.draw();
   }
 
@@ -321,9 +329,12 @@ class Game {
     }));
   }
 
-  private resetStartingPossition(): void {
-    this.player.x = this.startingPossition.x;
-    this.player.y = this.startingPossition.y;
+  private resetStartingPosition(): void {
+    this.player.x = this.startingPosition.x;
+    this.player.y = this.startingPosition.y;
+    this.player.vx = 0;
+    this.player.vy = 0;
+    this.player.direction = Direction.None;
   }
 
   private moveEnemies(): void {
